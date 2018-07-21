@@ -18,6 +18,11 @@ pub enum ChannelIdentifier {
     ChannelId(String)
 }
 
+pub enum PodcastIdentifier {
+    Channel(ChannelIdentifier),
+    Playlist(String)
+}
+
 #[derive(Serialize, Debug)]
 pub struct Podcast {
     title: String,
@@ -42,7 +47,8 @@ pub struct Episode {
 fn main() {
     rocket::ignite()
         .mount("/", routes![router::podcast_by_user_name,
-                            router::podcast_by_channel_id])
+                            router::podcast_by_channel_id,
+                            router::podcast_by_playlist_id])
         // I can't figure out how to register_filter with the fairing :(
         //.attach(Template::fairing())
         .launch();
