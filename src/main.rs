@@ -20,23 +20,23 @@ pub enum ChannelIdentifier {
 
 #[derive(Serialize, Debug)]
 pub struct Podcast {
-    title: &'static str,
-    url: &'static str,
-    description: &'static str,
+    title: String,
+    url: String,
+    description: String,
     episodes: Vec<Episode>,
-    thumbnail: &'static str,
-    build_date: Option<&'static str>
+    thumbnail: String,
+    build_date: Option<String>
 }
 
 #[derive(Serialize, Debug)]
 pub struct Episode {
-    title: &'static str,
-    url: &'static str,
-    description: &'static str,
-    file_url: &'static str,
-    published_date: &'static str,
-    duration: &'static str,
-    length: &'static str
+    title: String,
+    url: String,
+    description: String,
+    file_url: String,
+    published_date: String,
+    duration: u32,
+    length: u32
 }
 
 fn main() {
