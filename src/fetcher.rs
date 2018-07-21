@@ -1,10 +1,9 @@
 use std::vec::Vec;
 
-use std::fs::File;
-use std::io::prelude::*;
-
 extern crate serde_json;
 use self::serde_json::{Value, Error};
+
+extern crate reqwest;
 
 use super::*;
 
@@ -36,7 +35,7 @@ fn parse_podcast(value: Value) -> Result<Podcast, Error> {
     let description  = snippet["description"].as_str().expect("Not there").to_owned();
     let thumbnail    = snippet["thumbnails"]["high"]["url"].as_str().expect("Not there").to_owned();
 
-    let episodes: Vec<Episode> = get_playlist_episodes(&playlist_id)?;
+    let episodes: Vec<Episode> = fetch_playlist_episodes(playlist_id)?;
 
     Ok(Podcast {
         title: title,
@@ -49,27 +48,46 @@ fn parse_podcast(value: Value) -> Result<Podcast, Error> {
     })
 }
 
-fn get_playlist_episodes(playlist_id: &String) -> Result<Vec<Episode>, Error> {
-    let mut f = File::open("playlist.json").expect("file not found");
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).expect("Could not read file to string");
+fn fetch_playlist_episodes(playlist_id: String) -> Result<Vec<Episode>, Error> {
+    let url = build_url(Endpoint::PlaylistItems(playlist_id));
+
+    // TODO lol handle potential errors properly
+    // TODO get more than 50 videos
+    let contents = reqwest::get(&url).expect("Foo").text().expect("Foo");
+
     let mut playlist: Value = serde_json::from_str(&contents)?;
 
     let items: &mut Vec<Value> = playlist["items"].as_array_mut().expect("Not there");
     items.iter().map(|&ref item| parse_episode(&item)).collect()
 }
 
-pub fn fetch_podcast(id: ChannelIdentifier) -> Result<Podcast, Error> {
-    let url: String = match id {
-        ChannelIdentifier::Username(username) =>
-            format!("blah{}", username),
-        ChannelIdentifier::ChannelId(channel_id) =>
-            format!("blah{}", channel_id),
-    };
+enum Endpoint {
+    Channels(ChannelIdentifier),
+    Playlists(String),
+    PlaylistItems(String)
+}
 
-    let mut f = File::open("channel.json").expect("file not found");
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).expect("Could not read file to string");
+fn build_url(endpoint: Endpoint) -> String {
+    let endpoint_str = match endpoint {
+        Endpoint::Channels(ChannelIdentifier::Username(username)) =>
+            format!("channels?part=snippet%2CcontentDetails&forUsername={}", username),
+        Endpoint::Channels(ChannelIdentifier::ChannelId(channel_id)) =>
+            format!("channels?part=snippet%2CcontentDetails&id={}", channel_id),
+        Endpoint::Playlists(playlist_id) =>
+            format!("playlists?part=snippet&id={}", playlist_id),
+        Endpoint::PlaylistItems(playlist_id) =>
+            format!("playlistItems?part=snippet%2CcontentDetails&maxResults=50&playlistId={}", playlist_id),
+    };
+    let api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    format!("https://www.googleapis.com/youtube/v3/{}&key={}",
+            endpoint_str, api_key)
+}
+
+pub fn fetch_podcast(channel_id: ChannelIdentifier) -> Result<Podcast, Error> {
+    let url = build_url(Endpoint::Channels(channel_id));
+
+    // TODO lol handle potential errors properly
+    let contents = reqwest::get(&url).expect("Foo").text().expect("Foo");
     let channel: Value = serde_json::from_str(&contents)?;
 
     parse_podcast(channel)
