@@ -1,5 +1,5 @@
 # ryt-rss
-Another implementation of [youtuberss](https://github.com/JohnAZoidberg/youtuberss) after being frustrated by [Haskell](https://github.com/JohnAZoidberg/hyt-rss).
+Another implementation of [YoutubeRSS](https://github.com/JohnAZoidberg/youtuberss) after being frustrated by [Haskell](https://github.com/JohnAZoidberg/hyt-rss).
 
 With this program you can convert any Youtube playlist or channel to a podcast RSS feed that you can subscribe to with your favourite RSS player.
 
@@ -8,7 +8,8 @@ Barely works. Code is not idiomatic rust by any stretch of the imagination but t
 
 ## Building
 1. Obtain rust - only tested with rust-nightly July 19 2018 (see Mozilla's [Rust Overlay](https://github.com/mozilla/nixpkgs-mozilla/blob/master/rust-overlay.nix))
-2. `cargo build`
+2. Install dependencies: openssl
+3. `cargo build`
 
 ## Running
 `cargo run`
