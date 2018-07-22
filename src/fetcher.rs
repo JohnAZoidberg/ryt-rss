@@ -35,7 +35,7 @@ fn parse_playlist(value: Value, playlist_id: String) -> Result<Podcast, Error> {
     let description  = snippet["description"].as_str().expect("Not there").to_owned();
     let thumbnail    = snippet["thumbnails"]["high"]["url"].as_str().expect("Not there").to_owned();
 
-    let episodes: Vec<Episode> = fetch_playlist_episodes(playlist_id.clone())?;
+    let episodes: Vec<Episode> = fetch_playlist_episodes(&playlist_id)?;
 
     Ok(Podcast {
         title: title,
@@ -57,7 +57,7 @@ fn parse_channel(value: Value) -> Result<Podcast, Error> {
     let description  = snippet["description"].as_str().expect("Not there").to_owned();
     let thumbnail    = snippet["thumbnails"]["high"]["url"].as_str().expect("Not there").to_owned();
 
-    let episodes: Vec<Episode> = fetch_playlist_episodes(playlist_id.clone())?;
+    let episodes: Vec<Episode> = fetch_playlist_episodes(&playlist_id)?;
 
     Ok(Podcast {
         title: title,
@@ -70,7 +70,7 @@ fn parse_channel(value: Value) -> Result<Podcast, Error> {
     })
 }
 
-fn fetch_playlist_episodes(playlist_id: String) -> Result<Vec<Episode>, Error> {
+fn fetch_playlist_episodes(playlist_id: &String) -> Result<Vec<Episode>, Error> {
     let url = build_url(Endpoint::PlaylistItems(playlist_id));
 
     // TODO lol handle potential errors properly
@@ -80,13 +80,13 @@ fn fetch_playlist_episodes(playlist_id: String) -> Result<Vec<Episode>, Error> {
     let mut playlist: Value = serde_json::from_str(&contents)?;
 
     let items: &mut Vec<Value> = playlist["items"].as_array_mut().expect("Not there");
-    items.iter().map(|&ref item| parse_episode(&item)).collect()
+    items.iter().map(|ref item| parse_episode(item)).collect()
 }
 
-enum Endpoint {
-    Channels(ChannelIdentifier),
-    Playlists(String),
-    PlaylistItems(String)
+enum Endpoint <'a> {
+    Channels(&'a ChannelIdentifier),
+    Playlists(&'a String),
+    PlaylistItems(&'a String)
 }
 
 fn build_url(endpoint: Endpoint) -> String {
@@ -108,14 +108,14 @@ fn build_url(endpoint: Endpoint) -> String {
 pub fn fetch_podcast(podcast_id: PodcastIdentifier) -> Result<Podcast, Error> {
     match podcast_id {
         PodcastIdentifier::Channel(channel_id) => {
-            let url = build_url(Endpoint::Channels(channel_id));
+            let url = build_url(Endpoint::Channels(&channel_id));
             // TODO lol handle potential errors properly
             let contents = reqwest::get(&url).expect("Foo").text().expect("Foo");
             let json: Value = serde_json::from_str(&contents)?;
             parse_channel(json)
         },
         PodcastIdentifier::Playlist(playlist_id) => {
-            let url = build_url(Endpoint::Playlists(playlist_id.clone()));
+            let url = build_url(Endpoint::Playlists(&playlist_id));
             // TODO lol handle potential errors properly
             let contents = reqwest::get(&url).expect("Foo").text().expect("Foo");
             let json: Value = serde_json::from_str(&contents)?;

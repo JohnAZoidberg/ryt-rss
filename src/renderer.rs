@@ -4,7 +4,7 @@ use self::tera::{Context, Tera, Value, Error};
 
 use super::*;
 
-pub fn render_podcast(feed: &Podcast) -> Result<String, Error> {
+pub fn render_podcast(feed: Podcast) -> Result<String, Error> {
     let mut tera: Tera = Tera::new("templates/**/*")?;
     let mut ctx = Context::new();
     ctx.add("podcast", &feed);
